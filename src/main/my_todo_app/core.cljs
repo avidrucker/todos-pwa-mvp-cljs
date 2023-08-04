@@ -1,6 +1,7 @@
 (ns my-todo-app.core
   (:require [reagent.core :as reagent]
-            [reagent.dom :as reagent-dom]))
+            [reagent.dom :as reagent-dom]
+            [clojure.string :as string]))
 
 (defn save-cntr [t-index]
   (let [t-index-js (js/JSON.stringify (clj->js {:t-index t-index}))]
@@ -37,7 +38,6 @@
    {:todos (load-todos)
     :t-index (load-cntr)})) ; Initialize t-index counter
 
-
 (add-watch app-state :save-todos
   (fn [_ _ _ new-state]
     (save-todos (:todos new-state))))
@@ -46,31 +46,37 @@
   (fn [_ _ _ new-state]
     (save-cntr (:t-index new-state))))
 
-#_(defn handle-toggle [] )
+(defn handle-toggle [todo]
+  #(swap! app-state update :todos
+          (fn [todos]
+            (map (fn [t]
+                   (if (= (:id t) (:id todo))
+                     (assoc t :done (not (:done todo)))
+                     t))
+                 todos))))
+
+(defn handle-delete [todo]
+  #(swap! app-state update :todos
+          (fn [todos]
+            (remove (fn [t] (= (:id todo) (:id t))) todos))))
 
 (defn todo-item [todo]
   [:li
    ;; [:span "T-Index: " (:t-index todo) " - "] ; Display t-index
-
    [:input {:type "checkbox" :checked (:done todo)
-            :on-change #(swap! app-state update :todos
-                               (fn [todos]
-                                 (map (fn [t]
-                                        (if (= (:id t) (:id todo))
-                                          (assoc t :done (not (:done todo)))
-                                          t))
-                                      todos)))
-            }]
-   
+            :on-change (handle-toggle todo)}]
+
    [:span (:text todo)]
-   [:button {:on-click #(swap! app-state update :todos (fn [todos] (remove (fn [x] (= (:id todo) (:id x))) todos)))} "Delete"]])
+   [:button {:on-click (handle-delete todo)} "Delete"]])
 
 (defn cntr []
   [:p (str "The counter is at " (:t-index @app-state))])
 
 (defn todo-list []
   (let [sorted-todos (sort-by :t-index (:todos @app-state))]
-    [:ul (for [todo sorted-todos] ^{:key (:id todo)} [todo-item todo])]))
+    (if (zero? (count sorted-todos))
+      [:p "Add some items to your to-do list."]
+      [:ul (for [todo sorted-todos] ^{:key (:id todo)} [todo-item todo])])))
 
 (defn add-todo [text]
   (swap! app-state
@@ -87,11 +93,14 @@
 (defn todo-input []
   (let [input-ref (reagent/atom nil)]
     (fn []
-      [:div
+      [:form {:on-submit (fn [event]
+                           (.preventDefault event) ; Prevent form from refreshing the page
+                           (when-let [input-val (-> @input-ref .-value str)]
+                             (when (not (string/blank? input-val)) ; Check if input is not empty
+                               (add-todo input-val)
+                               (set! (.-value @input-ref) ""))))}
        [:input {:type "text" :placeholder "New TODO" :ref #(reset! input-ref %)}]
-       [:button {:on-click #(when-let [input-val (-> @input-ref .-value str)] ; Ensure input-val is a string
-                             (add-todo input-val)
-                             (set! (.-value @input-ref) ""))} "Add"]])))
+       [:button {:type "submit"} "Add"]])))
 
 (defn main-panel []
   [:div

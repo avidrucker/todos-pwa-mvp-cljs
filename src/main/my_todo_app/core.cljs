@@ -46,19 +46,22 @@
   (fn [_ _ _ new-state]
     (save-cntr (:t-index new-state))))
 
+#_(defn handle-toggle [] )
+
 (defn todo-item [todo]
   [:li
-   [:span "T-Index: " (:t-index todo) " - "] ; Display t-index
-   [:input {:type "checkbox" :checked (:done todo)
-            :on-change #(swap! app-state update-in [:todos (:id todo)] assoc :done (not (:done todo)))}]
-   [:span (:text todo)]
-   [:button {:on-click #(swap! app-state update :todos (fn [todos] (remove (fn [x] (= (:id todo) (:id x))) todos)))} "Delete"]])
+   ;; [:span "T-Index: " (:t-index todo) " - "] ; Display t-index
 
-
-#_(defn todo-item [todo]
-  [:li
    [:input {:type "checkbox" :checked (:done todo)
-            :on-change #(swap! app-state update-in [:todos (:id todo)] assoc :done (not (:done todo)))}]
+            :on-change #(swap! app-state update :todos
+                               (fn [todos]
+                                 (map (fn [t]
+                                        (if (= (:id t) (:id todo))
+                                          (assoc t :done (not (:done todo)))
+                                          t))
+                                      todos)))
+            }]
+   
    [:span (:text todo)]
    [:button {:on-click #(swap! app-state update :todos (fn [todos] (remove (fn [x] (= (:id todo) (:id x))) todos)))} "Delete"]])
 
@@ -92,7 +95,8 @@
 
 (defn main-panel []
   [:div
-   [cntr]
+   [:h1 "To-Do List"]
+   ;; [cntr]
    [todo-input]
    [todo-list]])
 

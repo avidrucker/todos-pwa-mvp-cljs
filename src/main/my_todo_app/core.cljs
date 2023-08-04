@@ -23,13 +23,11 @@
 (defn load-todos []
   (try
     (let [saved-todos (js/localStorage.getItem "todos")
-      ;; (println "Saved todos JSON:" saved-todos) ; Debugging line
-      loaded-todos (-> saved-todos
-                             js/JSON.parse
-                             (js->clj :keywordize-keys true)
-                             :todos)] ; Extract :todos key
-        ;; (println "Loaded todos:" loaded-todos) ; Debugging line
-        loaded-todos)
+          loaded-todos (-> saved-todos
+                           js/JSON.parse
+                           (js->clj :keywordize-keys true)
+                           :todos)] ; Extract :todos key
+      loaded-todos)
     (catch :default e
       (js/console.error "Error loading todos" e)
       [])))
@@ -68,8 +66,8 @@
   [:p (str "The counter is at " (:t-index @app-state))])
 
 (defn todo-list []
-  [:ul (for [todo (:todos @app-state)]
-         ^{:key (:id todo)} [todo-item todo])])
+  (let [sorted-todos (sort-by :t-index (:todos @app-state))]
+    [:ul (for [todo sorted-todos] ^{:key (:id todo)} [todo-item todo])]))
 
 (defn add-todo [text]
   (swap! app-state
@@ -83,7 +81,6 @@
                           :t-index current-index})
                  (assoc :t-index (inc current-index)))))))
 
-
 (defn todo-input []
   (let [input-ref (reagent/atom nil)]
     (fn []
@@ -92,7 +89,6 @@
        [:button {:on-click #(when-let [input-val (-> @input-ref .-value str)] ; Ensure input-val is a string
                              (add-todo input-val)
                              (set! (.-value @input-ref) ""))} "Add"]])))
-
 
 (defn main-panel []
   [:div

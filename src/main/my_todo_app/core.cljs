@@ -61,14 +61,17 @@
             (remove (fn [t] (= (:id todo) (:id t))) todos))))
 
 (defn todo-item [todo]
-  [:li
+  [:li {:style {:list-style-type "none"
+                :padding-left "0"
+                :margin-bottom "0.25rem"}}
    ;; [:span "T-Index: " (:t-index todo) " - "] ; Display t-index
-   [:input {:type "checkbox" :checked (:done todo)
-            :on-change (handle-toggle todo)}]
-
-   [:span (:text todo)]
-   [:button {:on-click (handle-delete todo)
-             :style {:margin-left "0.5rem"}} "Delete"]])
+   [:div {:style {:display "flex"
+                  :alignitems "center"}}
+    [:input {:type "checkbox" :checked (:done todo)
+             :on-change (handle-toggle todo)}]
+    [:span (:text todo)]
+    [:button {:on-click (handle-delete todo)
+              :style {:margin-left "0.5rem"}} "Delete"]]])
 
 (defn cntr []
   [:p (str "The counter is at " (:t-index @app-state))])
@@ -77,7 +80,8 @@
   (let [sorted-todos (sort-by :t-index (:todos @app-state))]
     (if (zero? (count sorted-todos))
       [:p "Add some items to your to-do list."]
-      [:ul (for [todo sorted-todos] ^{:key (:id todo)} [todo-item todo])])))
+      [:ul {:style {:padding-left "1rem"}}
+       (for [todo sorted-todos] ^{:key (:id todo)} [todo-item todo])])))
 
 (defn add-todo [text]
   (swap! app-state
@@ -103,7 +107,7 @@
                                    (add-todo (string/trim input-val))
                                    (set! (.-value @input-ref) "")))))}
        [:input {:type "text"
-                :placeholder "New TODO"
+                :placeholder "Type a to-do item here."
                 :ref #(reset! input-ref %)
                 :required true}]
        [:button {:type "submit"} "Add"]])))

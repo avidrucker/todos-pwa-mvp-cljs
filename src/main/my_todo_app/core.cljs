@@ -67,7 +67,8 @@
             :on-change (handle-toggle todo)}]
 
    [:span (:text todo)]
-   [:button {:on-click (handle-delete todo)} "Delete"]])
+   [:button {:on-click (handle-delete todo)
+             :style {:margin-left "0.5rem"}} "Delete"]])
 
 (defn cntr []
   [:p (str "The counter is at " (:t-index @app-state))])

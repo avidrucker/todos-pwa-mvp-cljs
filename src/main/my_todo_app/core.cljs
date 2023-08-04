@@ -94,13 +94,19 @@
   (let [input-ref (reagent/atom nil)]
     (fn []
       [:form {:on-submit (fn [event]
-                           (.preventDefault event) ; Prevent form from refreshing the page
-                           (when-let [input-val (-> @input-ref .-value str)]
-                             (when (not (string/blank? input-val)) ; Check if input is not empty
-                               (add-todo input-val)
-                               (set! (.-value @input-ref) ""))))}
-       [:input {:type "text" :placeholder "New TODO" :ref #(reset! input-ref %)}]
+                           (let [input-val (-> @input-ref .-value str)]
+                             (if (empty? input-val)
+                               (do (.preventDefault event)
+                                   (set! (.-value @input-ref) ""))
+                               (do (.preventDefault event) 
+                                   (add-todo (string/trim input-val))
+                                   (set! (.-value @input-ref) "")))))}
+       [:input {:type "text"
+                :placeholder "New TODO"
+                :ref #(reset! input-ref %)
+                :required true}]
        [:button {:type "submit"} "Add"]])))
+
 
 (defn main-panel []
   [:div

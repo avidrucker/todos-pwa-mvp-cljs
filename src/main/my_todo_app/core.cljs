@@ -67,7 +67,8 @@
    ;; [:span "T-Index: " (:t-index todo) " - "] ; Display t-index
    [:div {:style {:display "flex"
                   :alignitems "center"}}
-    [:input {:type "checkbox" :checked (:done todo)
+    [:input {:id (str "done-" (:t-index todo))
+             :type "checkbox" :checked (:done todo)
              :on-change (handle-toggle todo)}]
     [:span (:text todo)]
     [:button {:on-click (handle-delete todo)
@@ -100,14 +101,17 @@
     (fn []
       [:form {:on-submit (fn [event]
                            (let [input-val (-> @input-ref .-value str)]
-                             (if (empty? input-val)
+                             (if (or (string/blank? input-val)
+                                      (empty? input-val))
                                (do (.preventDefault event)
                                    (set! (.-value @input-ref) ""))
-                               (do (.preventDefault event) 
+                               (do (.preventDefault event)
                                    (add-todo (string/trim input-val))
                                    (set! (.-value @input-ref) "")))))}
-       [:input {:type "text"
-                :placeholder "Type a to-do item here."
+       [:input {:id "new-item-input"
+                :name "new-item-input"
+                :type "text"
+                :placeholder "Type your to-do item here"
                 :ref #(reset! input-ref %)
                 :required true}]
        [:button {:type "submit"} "Add"]])))
@@ -115,7 +119,7 @@
 
 (defn main-panel []
   [:div
-   [:h1 "To-Do List"]
+   [:h1 "To Do List"]
    ;; [cntr]
    [todo-input]
    [todo-list]])

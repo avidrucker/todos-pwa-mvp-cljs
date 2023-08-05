@@ -3,43 +3,49 @@ var urlsToCache = [
     // '/',
     '/index.html',
     '/favicon.ico',
-    //'/css/style.css',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png',
+    '/manifest.json',
     '/js/main.js',
-    // Add other assets as needed
 ];
+
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        return Promise.all(
-          urlsToCache.map(function(url) {
-            return fetch(url)
-              .then(function(response) {
-                if (!response.ok) {
-                  throw new Error('Failed to fetch ' + url);
-                }
-                return cache.put(url, response);
-              })
-          })
-        );
-      })
-      .catch(function(error) {
-        console.error('Failed to cache:', error);
+        return Promise.all(urlsToCache.map(function(url) {
+          return fetch(url).then(function(response) {
+            if (!response.ok) {
+              console.error('Failed to cache:', url, response.status, response.statusText);
+              return; // Skip this URL if fetch failed
+            }
+            return cache.put(url, response);
+          }).catch(function(error) {
+            console.error('Fetch error for:', url, error);
+          });
+        }));
       })
   );
 });
 
+
 self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        if (response) {
-          return response; // Return cached response if available
-        }
-        return fetch(event.request); // Otherwise, fetch from the network
-      })
-  );
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html')
+        .then(function(response) {
+          return response || fetch(event.request);
+        })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request)
+        .then(function(response) {
+          return response || fetch(event.request);
+        })
+    );
+  }
 });
 
 
